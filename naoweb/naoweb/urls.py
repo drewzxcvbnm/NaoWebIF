@@ -21,5 +21,5 @@ import app.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', app.views.current_datetime),
+    path('', app.views.index),
 ]
