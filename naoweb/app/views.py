@@ -31,6 +31,13 @@ def presentation_page(request, pid):
     return HttpResponse(template.render(context))
 
 
+def survey_page(request, sid):
+    s = surveys[sid]
+    template = loader.get_template('app/survey.html')
+    context = {"s": s}
+    return HttpResponse(template.render(context))
+
+
 @api_view(["GET"])
 def get_survey(request, sid):
     s = surveys[sid]
