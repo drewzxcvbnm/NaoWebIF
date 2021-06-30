@@ -1,6 +1,7 @@
 from django.shortcuts import render
 import json
 import datetime
+from django import template
 from django.template import loader, Context
 from django.http import HttpResponse
 from app.items.survey import Survey
@@ -33,9 +34,8 @@ def presentation_page(request, pid):
 
 def survey_page(request, sid):
     s = surveys[sid]
-    template = loader.get_template('app/survey.html')
     context = {"s": s}
-    return HttpResponse(template.render(context))
+    return render(request, 'app/survey.html', context)
 
 
 @api_view(["GET"])
@@ -56,3 +56,17 @@ def create_survey(request, pid):
     s = Survey(**request.data)
     p.add_survey(s)
     return HttpResponse(status=200, content=str(s.id))
+
+
+@api_view(["POST"])
+def answer_survey(request, sid):
+    s = surveys[sid]
+    a = request.data['option']
+    s.results[a] += 1
+    if "answered_surveys" not in request.session:
+        request.session["answered_surveys"] = []
+    request.session["answered_surveys"].append(sid)
+    request.session.modified = True
+    s = surveys[sid]
+    return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.results, default=str))
+

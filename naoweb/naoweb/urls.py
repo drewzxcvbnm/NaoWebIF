@@ -22,8 +22,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', app.views.index),
     path('create/presentation', app.views.create_presentation),
-    path('survey/<int:sid>', app.views.get_survey),
     path('presentation/<int:pid>/create/survey', app.views.create_survey),
+    path('survey/<int:sid>', app.views.get_survey),
     path('view/presentation/<int:pid>', app.views.presentation_page),
     path('view/survey/<int:sid>', app.views.survey_page),
+    path('answer/survey/<int:sid>', app.views.answer_survey)
 ]

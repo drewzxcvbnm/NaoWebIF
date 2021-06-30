@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load app_extras %}
     <meta charset="UTF-8">
     <title>Survey {{ s.id }}</title>
     {% load static %}
@@ -21,12 +22,47 @@
     </style>
 </head>
 <body>
+<script>
+
+    async function postData(url = '', data = {}) {
+        const response = await fetch(url, {
+            method: 'POST',
+            mode: 'cors',
+            cache: 'no-cache',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow',
+            referrerPolicy: 'no-referrer',
+            body: JSON.stringify(data)
+        });
+        return response.json();
+    }
+
+    function submit_answer(option) {
+        const url = '/answer/survey/{{ s.id }}';
+        data = {"option": option}
+        postData(url, data).then(data => {
+            location.reload();
+        })
+    }
+</script>
 <div class="container">
     <div class="jumbotron">
         <h2>{{ s.question }}</h2>
     </div>
     {% for o in s.options %}
-        <div class="btn btn-primary option" style="display: block">{{ o }}</div>
+        {% if s.id in request.session.answered_surveys %}
+            <div class="btn btn-primary option" style="display: block;background-color: gray">
+                {{ o }}
+                <div style="float: right">{{ s.results|hash:o }}</div>
+            </div>
+        {% else %}
+            <div onclick="submit_answer('{{ o }}')" class="btn btn-primary option" style="display: block">
+                {{ o }}
+            </div>
+        {% endif %}
     {% endfor %}
 </div>
 </body>
