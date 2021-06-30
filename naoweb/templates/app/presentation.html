@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     {% load static %}
-    <title>Nao Presentations</title>
     <meta charset="UTF-8">
+    <title>Presentation {{ p.id }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
@@ -15,14 +15,12 @@
 <div class="container">
     <ul class="list-group">
         <div class="jumbotron">
-            <h1>Ongoing NAO presentations:</h1>
+            <h1>Presentation {{ p.id }}: {{ p.name }}</h1>
         </div>
-        {% for p in presentations %}
-            <a href="/presentation/{{ p.id }}">
-                <li class="list-group-item clickable">{{ p.id }} - {{ p.name }}
-                    <div style="float: right"> {{ p.viewtime }}</div>
-                </li>
-            </a>
+        {% for s in p.surveys %}
+            <li class="list-group-item clickable">{{ s.id }} - {{ s.question }}
+                <div style="float: right"> {{ s.viewtime }}</div>
+            </li>
         {% endfor %}
     </ul>
 </div>

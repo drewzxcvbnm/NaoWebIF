@@ -15,12 +15,19 @@ async def current_datetime(request):
     return HttpResponse(html)
 
 
-@api_view(["GET"])
 def index(request):
     p = Presentation("PP")
     presentations[p.id] = p
     template = loader.get_template('app/index.html')
     context = {"presentations": presentations.values()}
+    return HttpResponse(template.render(context))
+
+
+def presentation_page(request, pid):
+    p = presentations[pid]
+    p.add_survey(Survey("What is the first letter of the alphabet?", ["a", "b", "c"]))
+    template = loader.get_template('app/presentation.html')
+    context = {"p": p}
     return HttpResponse(template.render(context))
 
 
