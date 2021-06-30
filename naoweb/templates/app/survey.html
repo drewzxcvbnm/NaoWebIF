@@ -56,7 +56,7 @@
         {% if s.id in request.session.answered_surveys %}
             <div class="btn btn-primary option" style="display: block;background-color: gray">
                 {{ o }}
-                <div style="float: right">{{ s.results|hash:o }}</div>
+                <div style="float: right">{{ s.results|mapget:o }}</div>
             </div>
         {% else %}
             <div onclick="submit_answer('{{ o }}')" class="btn btn-primary option" style="display: block">

@@ -4,5 +4,5 @@ register = template.Library()
 
 
 @register.filter
-def hash(h, key):
+def mapget(h, key):
     return h[key]

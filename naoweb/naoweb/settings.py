@@ -120,4 +120,4 @@ STATICFILES_DIRS = [f"{BASE_DIR}/static"]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"

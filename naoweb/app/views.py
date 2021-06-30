@@ -17,8 +17,8 @@ async def current_datetime(request):
 
 
 def index(request):
-    p = Presentation("PP")
-    presentations[p.id] = p
+    # p = Presentation("PP")
+    # presentations[p.id] = p
     template = loader.get_template('app/index.html')
     context = {"presentations": presentations.values()}
     return HttpResponse(template.render(context))
@@ -26,7 +26,7 @@ def index(request):
 
 def presentation_page(request, pid):
     p = presentations[pid]
-    p.add_survey(Survey("What is the first letter of the alphabet?", ["a", "b", "c"]))
+    # p.add_survey(Survey("What is the first letter of the alphabet?", ["a", "b", "c"]))
     template = loader.get_template('app/presentation.html')
     context = {"p": p}
     return HttpResponse(template.render(context))
@@ -69,4 +69,3 @@ def answer_survey(request, sid):
     request.session.modified = True
     s = surveys[sid]
     return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.results, default=str))
-
