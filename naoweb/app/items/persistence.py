@@ -12,10 +12,11 @@ def get_id_generator():
 
 
 def get_pin_generator():
-    pin = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-    while pin in pins:
+    while True:
         pin = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-    yield pin
+        if pin in pins:
+            continue
+        yield pin
 
 
 idGenerator = get_id_generator()

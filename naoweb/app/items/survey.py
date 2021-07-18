@@ -1,4 +1,6 @@
 from typing import List
+from datetime import datetime, timedelta
+from dateutil import tz
 
 from app.items.item import Item
 
@@ -9,6 +11,7 @@ class Survey(Item):
 
     def __init__(self, question: str, options: List[str], timelimit: int = None, status: str = "Draft"):
         super().__init__()
+        self.deadline = None
         self.options = options
         self.question = question
         self.timelimit = timelimit
@@ -16,3 +19,8 @@ class Survey(Item):
         self.results = dict([(i, 0) for i in options])
         self.pin = next(pinGenerator)
         surveys[self.id] = self
+
+    def open(self):
+        self.status = "Open"
+        if self.timelimit is not None:
+            self.deadline = datetime.now(tz.gettz("Europe/Riga")) + timedelta(seconds=self.timelimit)

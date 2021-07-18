@@ -44,6 +44,13 @@ def survey_page(request, sid):
 
 
 @api_view(["GET"])
+def open_survey(request, sid):
+    s = surveys[sid]
+    s.open()
+    return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.__dict__, default=str))
+
+
+@api_view(["GET"])
 def get_survey(request, sid):
     s = surveys[sid]
     return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.__dict__, default=str))
