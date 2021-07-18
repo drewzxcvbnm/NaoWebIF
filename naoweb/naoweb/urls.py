@@ -25,6 +25,7 @@ urlpatterns = [
     path('create/presentation', app.views.create_presentation),
     path('presentation/<int:pid>/create/survey', app.views.create_survey),
     path('survey/<int:sid>', app.views.get_survey),
+    path('update/survey/<int:sid>', app.views.update_survey),
     path('survey/pin/<str:pin>', app.views.get_survey_by_pin),
     path('view/presentation/<int:pid>', app.views.presentation_page),
     path('view/survey/<int:sid>', app.views.survey_page),

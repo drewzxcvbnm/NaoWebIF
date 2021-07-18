@@ -22,7 +22,7 @@
         }
     </style>
 </head>
-<body>
+<body style="margin-top: max(5%, 50px)">
 <script>
     function submit_answer(option) {
         const url = '/answer/survey/{{ s.id }}';
@@ -35,12 +35,21 @@
 <div class="container">
     <div class="jumbotron">
         <h2>{{ s.question }}</h2>
+        {% if s.status|lower == "closed" %}
+            <small style="float: left;" class="text-muted h4"><em>Survey is closed</em></small>
+        {% elif s.status|lower == "draft" %}
+            <small style="float: left" class="text-muted h4"><em>Survey is not yet open</em></small>
+        {% endif %}
     </div>
     {% for o in s.options %}
-        {% if s.id in request.session.answered_surveys %}
+        {% if s.id in request.session.answered_surveys or s.status|lower == 'closed' %}
             <div class="btn btn-primary option" style="display: block;background-color: gray">
                 {{ o }}
                 <div style="float: right">{{ s.results|mapget:o }}</div>
+            </div>
+        {% elif s.status|lower == 'draft' %}
+            <div class="btn btn-primary option" style="display: block;background-color: gray">
+                {{ o }}
             </div>
         {% else %}
             <div onclick="submit_answer('{{ o }}')" class="btn btn-primary option" style="display: block">

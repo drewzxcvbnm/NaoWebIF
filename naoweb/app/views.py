@@ -68,6 +68,8 @@ def create_presentation(request):
 def create_survey(request, pid):
     p = presentations[pid]
     s = Survey(**request.data)
+    for k, v in request.data.items():
+        setattr(s, k, v)
     p.add_survey(s)
     return HttpResponse(status=200, content=str(s.id))
 
@@ -83,3 +85,11 @@ def answer_survey(request, sid):
     request.session.modified = True
     s = surveys[sid]
     return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.results, default=str))
+
+
+@api_view(["POST"])
+def update_survey(request, sid):
+    s = surveys[sid]
+    for k, v in request.data.items():
+        setattr(s, k, v)
+    return HttpResponse(status=200, content="done")
