@@ -68,8 +68,6 @@ def create_presentation(request):
 def create_survey(request, pid):
     p = presentations[pid]
     s = Survey(**request.data)
-    for k, v in request.data.items():
-        setattr(s, k, v)
     p.add_survey(s)
     return HttpResponse(status=200, content=str(s.id))
 

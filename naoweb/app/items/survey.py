@@ -7,11 +7,12 @@ from app.items.persistence import surveys, pinGenerator
 
 class Survey(Item):
 
-    def __init__(self, question: str, options: List[str]):
+    def __init__(self, question: str, options: List[str], timelimit: int = None, status: str = "Draft"):
         super().__init__()
         self.options = options
         self.question = question
-        self.status = 'Draft'
+        self.timelimit = timelimit
+        self.status = status
         self.results = dict([(i, 0) for i in options])
         self.pin = next(pinGenerator)
         surveys[self.id] = self
