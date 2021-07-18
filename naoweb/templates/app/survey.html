@@ -20,9 +20,20 @@
             margin-bottom: 10px;
             font-size: x-large;
         }
+
+        html, body {
+            height: 100%;
+        }
+
+        #counter {
+            position: sticky;
+            padding-top: 10px;
+            padding-left: 10px;
+            font-size: x-large;
+        }
     </style>
 </head>
-<body style="margin-top: max(5%, 50px)">
+<body>
 <script>
     function submit_answer(option) {
         const url = '/answer/survey/{{ s.id }}';
@@ -31,8 +42,30 @@
             location.reload();
         })
     }
+    {% if s.deadline != null and s.status|lower == "open" %}
+        function millisToMinutesAndSeconds(millis) {
+            var minutes = Math.floor(millis / 60000);
+            var seconds = ((millis % 60000) / 1000).toFixed(0);
+            return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+        }
+
+        deadline = Date.parse("{{ s.deadline.isoformat }}")
+        function updateTime() {
+            const leftOverTime = deadline - Date.now()
+            if (leftOverTime <= 0) {
+                location.reload();
+            } else {
+                document.getElementById("counter-num").innerText = millisToMinutesAndSeconds(leftOverTime)
+            }
+        }
+        setInterval(updateTime, 1000);
+        window.onload = updateTime
+    {% endif %}
 </script>
-<div class="container">
+{% if s.deadline != null and s.status|lower == "open" %}
+    <div id="counter">Survey will end in <span id="counter-num">0:00</span></div>
+{% endif %}
+<div class="container" style="margin-top: max(5%, 50px)">
     <div class="jumbotron">
         <h2>{{ s.question }}</h2>
         {% if s.status|lower == "closed" %}
