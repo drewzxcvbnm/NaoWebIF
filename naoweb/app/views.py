@@ -24,6 +24,11 @@ def index(request):
     return HttpResponse(template.render(context))
 
 
+def pin_page(request):
+    template = loader.get_template('app/pin.html')
+    return HttpResponse(template.render())
+
+
 def presentation_page(request, pid):
     p = presentations[pid]
     # p.add_survey(Survey("What is the first letter of the alphabet?", ["a", "b", "c"]))
@@ -41,6 +46,15 @@ def survey_page(request, sid):
 @api_view(["GET"])
 def get_survey(request, sid):
     s = surveys[sid]
+    return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.__dict__, default=str))
+
+
+@api_view(["GET"])
+def get_survey_by_pin(request, pin):
+    res = list(filter(lambda x: x.pin.lower() == pin.lower(), surveys.values()))
+    if len(res) == 0:
+        return HttpResponse(status=200, content_type='application/json', content="false")
+    s = res[0]
     return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.__dict__, default=str))
 
 
