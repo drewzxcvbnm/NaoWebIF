@@ -1,7 +1,6 @@
 from django.shortcuts import render
 import json
 import datetime
-from django import template
 from django.template import loader, Context
 from django.http import HttpResponse
 from app.items.survey import Survey

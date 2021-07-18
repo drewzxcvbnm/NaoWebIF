@@ -1,3 +1,5 @@
+import time
+from threading import Timer
 from typing import List
 from datetime import datetime, timedelta
 from dateutil import tz
@@ -24,3 +26,7 @@ class Survey(Item):
         self.status = "Open"
         if self.timelimit is not None:
             self.deadline = datetime.now(tz.gettz("Europe/Riga")) + timedelta(seconds=self.timelimit)
+            Timer(self.timelimit, self.close).start()
+
+    def close(self):
+        self.status = 'Closed'
