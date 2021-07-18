@@ -27,6 +27,7 @@ urlpatterns = [
     path('survey/<int:sid>', app.views.get_survey),
     path('update/survey/<int:sid>', app.views.update_survey),
     path('open/survey/<int:sid>', app.views.open_survey),
+    path('survey/status/<int:sid>', app.views.get_survey_status),
     path('survey/pin/<str:pin>', app.views.get_survey_by_pin),
     path('view/presentation/<int:pid>', app.views.presentation_page),
     path('view/survey/<int:sid>', app.views.survey_page),

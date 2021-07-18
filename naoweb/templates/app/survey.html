@@ -35,6 +35,17 @@
 </head>
 <body>
 <script>
+    const currentStatus = "{{ s.status }}"
+    const sid = {{ s.id }};
+
+    setInterval(function () {
+        httpGetAsync("/survey/status/" + sid, function (resp) {
+            if (currentStatus !== resp) {
+                location.reload()
+            }
+        })
+    }, 2000)
+
     function submit_answer(option) {
         const url = '/answer/survey/{{ s.id }}';
         data = {"option": option}
