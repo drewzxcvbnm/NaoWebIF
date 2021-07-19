@@ -3,6 +3,7 @@ import random, string
 pins = set()
 presentations = {}
 surveys = {}
+surveyQuestions = {}
 
 
 def get_id_generator():
