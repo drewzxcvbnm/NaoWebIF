@@ -1,4 +1,6 @@
 from django import template
+from datetime import datetime, timedelta
+from dateutil import tz
 
 register = template.Library()
 
@@ -14,3 +16,10 @@ def indexOf(li, el):
         if v is el:
             return i
     return -1
+
+
+@register.filter
+def overDeadline(cq):
+    if cq.deadline is None:
+        return False
+    return cq.deadline < datetime.now(tz.gettz("Europe/Riga"))

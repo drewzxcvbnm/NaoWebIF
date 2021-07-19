@@ -52,6 +52,8 @@ class Survey(Item):
 
     def open(self):
         self.status = "Open"
+        if self.currentQuestion.timelimit is not None:
+            self.currentQuestion.setDeadline()
         if self.type == "auto":
             self.currentQuestion.setDeadline()
             Thread(target=self.autorun).start()
@@ -68,12 +70,16 @@ class Survey(Item):
         if i < len(self.questions) - 1:
             i += 1
         self.currentQuestion = self.questions[i]
+        if self.currentQuestion.timelimit is not None:
+            self.currentQuestion.setDeadline()
 
     def prev(self):
         i = indexOf(self.questions, self.currentQuestion)
         if i != 0:
             i -= 1
         self.currentQuestion = self.questions[i]
+        if self.currentQuestion.timelimit is not None:
+            self.currentQuestion.setDeadline()
 
     def close(self):
         self.status = 'Closed'

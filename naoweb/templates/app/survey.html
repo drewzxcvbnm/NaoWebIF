@@ -37,14 +37,16 @@
 <script>
     const currentStatus = "{{ s.status }}"
     const sid = {{ s.id }};
+    const qid = {{ s.currentQuestion.id }}
 
-    setInterval(function () {
-        httpGetAsync("/survey/status/" + sid, function (resp) {
-            if (currentStatus !== resp) {
-                location.reload()
-            }
-        })
-    }, 2000)
+        setInterval(function () {
+            httpGetAsync("/survey/status/" + sid, function (resp) {
+                resp = JSON.parse(resp)
+                if (currentStatus !== resp["status"] || qid !== resp["qid"]) {
+                    location.reload()
+                }
+            })
+        }, 2000)
 
     function next() {
         httpGet(`/survey/${sid}/next`)
@@ -71,16 +73,25 @@
         }
 
         deadline = Date.parse("{{ s.currentQuestion.deadline.isoformat }}")
-        if (deadline < Date.now()) {
+        const type = "{{ s.type }}"
+        if (deadline < Date.now() && type === "auto") {
             setTimeout(location.reload, 500);
         }
+        var oldLeftOver = deadline - Date.now()
         function updateTime() {
             const leftOverTime = deadline - Date.now()
-            if (leftOverTime <= 0) {
+            if (leftOverTime <= 0 && oldLeftOver > 0) {
                 location.reload();
-            } else {
-                document.getElementById("counter-num").innerText = millisToMinutesAndSeconds(leftOverTime)
             }
+            if (leftOverTime <= 0 && type === "auto") {
+                location.reload();
+            } else if (leftOverTime > 0) {
+                var innerText = millisToMinutesAndSeconds(leftOverTime);
+                document.getElementById("counter-num").innerText = innerText
+            } else {
+                document.getElementById("counter-num").innerText = "0:00"
+            }
+            oldLeftOver = leftOverTime
         }
         setInterval(updateTime, 1000);
         window.onload = updateTime
@@ -119,7 +130,7 @@
             <div class="btn btn-primary option" style="display: block;background-color: gray">
                 {{ o }}
             </div>
-        {% elif s.status|lower == "closed" %}
+        {% elif s.status|lower == "closed" or s.currentQuestion|overDeadline %}
             <div class="btn btn-primary option" style="display: block;background-color: gray">
                 {{ o }}
                 <div style="float: right">{{ s.currentQuestion.results|mapget:o }}</div>

@@ -53,7 +53,8 @@ def open_survey(request, sid):
 @api_view(["GET"])
 def get_survey_status(request, sid):
     s = surveys[sid]
-    return HttpResponse(status=200, content_type='application/json', content=s.status)
+    ret = {"status": s.status, "qid": s.currentQuestion.id}
+    return HttpResponse(status=200, content_type='application/json', content=json.dumps(ret))
 
 
 @api_view(["GET"])
