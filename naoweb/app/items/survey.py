@@ -63,6 +63,7 @@ class Survey(Item):
             self.currentQuestion = self.questions[qi]
             self.currentQuestion.setDeadline()
             time.sleep(self.currentQuestion.timelimit)
+            time.sleep(5)  # 5 second time window to show answers on FE
         self.close()
 
     def next(self):

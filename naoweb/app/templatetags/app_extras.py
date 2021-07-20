@@ -23,3 +23,12 @@ def overDeadline(cq):
     if cq.deadline is None:
         return False
     return cq.deadline < datetime.now(tz.gettz("Europe/Riga"))
+
+
+@register.filter
+def answered(answeredQuestionsList, question):
+    if answeredQuestionsList is None:
+        return False
+    if question.id in answeredQuestionsList:
+        return True
+    return False
