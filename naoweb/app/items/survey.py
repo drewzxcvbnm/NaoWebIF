@@ -4,7 +4,6 @@ from threading import Timer, Thread
 from typing import List
 from datetime import datetime, timedelta
 from dateutil import tz
-from app.templatetags.app_extras import indexOf
 
 from app.items.item import Item
 
@@ -67,6 +66,7 @@ class Survey(Item):
         self.close()
 
     def next(self):
+        from app.templatetags.app_extras import indexOf
         i = indexOf(self.questions, self.currentQuestion)
         if i < len(self.questions) - 1:
             i += 1
@@ -75,6 +75,7 @@ class Survey(Item):
             self.currentQuestion.setDeadline()
 
     def prev(self):
+        from app.templatetags.app_extras import indexOf
         i = indexOf(self.questions, self.currentQuestion)
         if i != 0:
             i -= 1

@@ -2,6 +2,8 @@ from django import template
 from datetime import datetime, timedelta
 from dateutil import tz
 
+from app.services.optionbuilder import getOptionBuilder
+
 register = template.Library()
 
 
@@ -32,3 +34,9 @@ def answered(answeredQuestionsList, question):
     if question.id in answeredQuestionsList:
         return True
     return False
+
+
+@register.simple_tag()
+def buildoption(survey, option, session):
+    b = getOptionBuilder(survey, option, session)
+    return b.build()

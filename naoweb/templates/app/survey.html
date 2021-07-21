@@ -67,8 +67,8 @@
     }
     {% if s.currentQuestion.deadline != null and s.status|lower == "open" %}
         function millisToMinutesAndSeconds(millis) {
-            var minutes = Math.floor(millis / 60000);
-            var seconds = ((millis % 60000) / 1000).toFixed(0);
+            let minutes = Math.floor(millis / 60000);
+            let seconds = ((millis % 60000) / 1000).toFixed(0);
             return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
         }
 
@@ -116,48 +116,9 @@
         {% endif %}
     </div>
     {% for o in s.currentQuestion.options %}
-        {% if s.status|lower == "open" and not s.currentQuestion|overDeadline and not request.session.answered_questions|answered:s.currentQuestion %}
-            <div onclick="submit_answer('{{ o }}')" class="btn btn-primary option" style="display: block">
-                {{ o }}
-            </div>
-        {% elif s.type == "auto" %}
-            {% if s.currentQuestion|overDeadline and s.currentQuestion.validOption != null %}
-                {% if forloop.counter  == s.currentQuestion.validOption %}
-                    <div class="btn btn-success option" style="display: block;">
-                        {{ o }}
-                        <div style="float: right">{{ s.currentQuestion.results|mapget:o }}</div>
-                    </div>
-                {% else %}
-                    <div class="btn btn-danger option" style="display: block;">
-                        {{ o }}
-                        <div style="float: right">{{ s.currentQuestion.results|mapget:o }}</div>
-                    </div>
-                {% endif %}
-            {% else %}
-                <div class="btn btn-primary option" style="display: block;background-color: gray">
-                    {{ o }}
-                    <div style="float: right">{{ s.currentQuestion.results|mapget:o }}</div>
-                </div>
-            {% endif %}
-        {% elif s.type != "auto" %}
-            {% if s.currentQuestion.validOption != null and request.session.answered_questions|answered:s.currentQuestion %}
-                {% if forloop.counter  == s.currentQuestion.validOption %}
-                    <div class="btn btn-success option" style="display: block;">
-                        {{ o }}
-                        <div style="float: right">{{ s.currentQuestion.results|mapget:o }}</div>
-                    </div>
-                {% else %}
-                    <div class="btn btn-danger option" style="display: block;">
-                        {{ o }}
-                        <div style="float: right">{{ s.currentQuestion.results|mapget:o }}</div>
-                    </div>
-                {% endif %}
-            {% else %}
-                <div class="btn btn-primary option" style="display: block;background-color: gray">
-                    {{ o }}
-                </div>
-            {% endif %}
-        {% endif %}
+        {% autoescape off %}
+        {% buildoption s o request.session %}
+        {% endautoescape %}
     {% endfor %}
     {% if s.type == "manual" %}
         <ul class="pager" style="margin-top: 5%">
