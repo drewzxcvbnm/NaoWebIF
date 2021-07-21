@@ -1,10 +1,11 @@
 from django.shortcuts import render
 import json
 import datetime
+import jsonpickle
 from django.template import loader, Context
 from django.http import HttpResponse
 from app.items.survey import Survey
-from app.items.persistence import presentations, surveys
+from app.items.persistence import presentations, surveys, surveyQuestions
 from app.items.presentation import Presentation
 from rest_framework.decorators import api_view
 
@@ -46,19 +47,20 @@ def survey_page(request, sid):
 def open_survey(request, sid):
     s = surveys[sid]
     s.open()
-    return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.__dict__, default=str))
+    return HttpResponse(status=200, content_type='application/json', content=surveyToJSON(s))
 
 
 @api_view(["GET"])
 def get_survey_status(request, sid):
     s = surveys[sid]
-    return HttpResponse(status=200, content_type='application/json', content=s.status)
+    ret = {"status": s.status, "qid": s.currentQuestion.id}
+    return HttpResponse(status=200, content_type='application/json', content=json.dumps(ret))
 
 
 @api_view(["GET"])
 def get_survey(request, sid):
     s = surveys[sid]
-    return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.__dict__, default=str))
+    return HttpResponse(status=200, content_type='application/json', content=surveyToJSON(s))
 
 
 @api_view(["GET"])
@@ -67,7 +69,7 @@ def get_survey_by_pin(request, pin):
     if len(res) == 0:
         return HttpResponse(status=200, content_type='application/json', content="false")
     s = res[0]
-    return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.__dict__, default=str))
+    return HttpResponse(status=200, content_type='application/json', content=surveyToJSON(s))
 
 
 @api_view(["POST"])
@@ -79,22 +81,22 @@ def create_presentation(request):
 @api_view(["POST"])
 def create_survey(request, pid):
     p = presentations[pid]
-    s = Survey(**request.data)
+    s = Survey.fromJson(**request.data)
     p.add_survey(s)
     return HttpResponse(status=200, content=str(s.id))
 
 
 @api_view(["POST"])
-def answer_survey(request, sid):
-    s = surveys[sid]
+def answer_survey_question(request, qid):
+    q = surveyQuestions[qid]
     a = request.data['option']
-    s.results[a] += 1
-    if "answered_surveys" not in request.session:
-        request.session["answered_surveys"] = []
-    request.session["answered_surveys"].append(sid)
+    q.results[a] += 1
+    if "answered_questions" not in request.session:
+        request.session["answered_questions"] = []
+    request.session["answered_questions"].append(qid)
     request.session.modified = True
-    s = surveys[sid]
-    return HttpResponse(status=200, content_type='application/json', content=json.dumps(s.results, default=str))
+    q = surveyQuestions[qid]
+    return HttpResponse(status=200, content_type='application/json', content=json.dumps(q.results, default=str))
 
 
 @api_view(["POST"])
@@ -103,3 +105,19 @@ def update_survey(request, sid):
     for k, v in request.data.items():
         setattr(s, k, v)
     return HttpResponse(status=200, content="done")
+
+
+def survey_next(request, sid):
+    s = surveys[sid]
+    s.next()
+    return HttpResponse(status=200, content="done")
+
+
+def survey_prev(request, sid):
+    s = surveys[sid]
+    s.prev()
+    return HttpResponse(status=200, content="done")
+
+
+def surveyToJSON(survey):
+    return jsonpickle.encode(survey, unpicklable=False)

@@ -37,70 +37,99 @@
 <script>
     const currentStatus = "{{ s.status }}"
     const sid = {{ s.id }};
+    const qid = {{ s.currentQuestion.id }}
 
-    setInterval(function () {
-        httpGetAsync("/survey/status/" + sid, function (resp) {
-            if (currentStatus !== resp) {
-                location.reload()
-            }
-        })
-    }, 2000)
+        setInterval(function () {
+            httpGetAsync("/survey/status/" + sid, function (resp) {
+                resp = JSON.parse(resp)
+                if (currentStatus !== resp["status"] || qid !== resp["qid"]) {
+                    location.reload()
+                }
+            })
+        }, 2000)
+
+    function next() {
+        httpGet(`/survey/${sid}/next`)
+        location.reload()
+    }
+
+    function prev() {
+        httpGet(`/survey/${sid}/prev`)
+        location.reload()
+    }
 
     function submit_answer(option) {
-        const url = '/answer/survey/{{ s.id }}';
+        const url = '/answer/survey/{{ s.currentQuestion.id }}';
         data = {"option": option}
         postData(url, data).then(data => {
             location.reload();
         })
     }
-    {% if s.deadline != null and s.status|lower == "open" %}
+    {% if s.currentQuestion.deadline != null and s.status|lower == "open" %}
         function millisToMinutesAndSeconds(millis) {
-            var minutes = Math.floor(millis / 60000);
-            var seconds = ((millis % 60000) / 1000).toFixed(0);
+            let minutes = Math.floor(millis / 60000);
+            let seconds = ((millis % 60000) / 1000).toFixed(0);
             return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
         }
 
-        deadline = Date.parse("{{ s.deadline.isoformat }}")
+        deadline = Date.parse("{{ s.currentQuestion.deadline.isoformat }}")
+        const type = "{{ s.type }}"
+        if (deadline < Date.now() && type === "auto") {
+            setTimeout(location.reload, 5000);
+        } else {
+            window.onload = updateTime
+            setInterval(updateTime, 1000);
+        }
+        var oldLeftOver = deadline - Date.now()
         function updateTime() {
             const leftOverTime = deadline - Date.now()
-            if (leftOverTime <= 0) {
+            if (leftOverTime <= 0 && oldLeftOver > 0) {
                 location.reload();
-            } else {
-                document.getElementById("counter-num").innerText = millisToMinutesAndSeconds(leftOverTime)
             }
+            if (leftOverTime <= 0 && type === "auto") {
+                location.reload();
+            } else if (leftOverTime > 0) {
+                var innerText = millisToMinutesAndSeconds(leftOverTime);
+                document.getElementById("counter-num").innerText = innerText
+            } else {
+                document.getElementById("counter-num").innerText = "0:00"
+            }
+            oldLeftOver = leftOverTime
         }
-        setInterval(updateTime, 1000);
-        window.onload = updateTime
     {% endif %}
 </script>
-{% if s.deadline != null and s.status|lower == "open" %}
-    <div id="counter">Survey will end in <span id="counter-num">0:00</span></div>
-{% endif %}
+{#{% if s.currentQuestion.deadline != null and s.status|lower == "open" %}#}
+{#    <div id="counter">Question will expire in <span id="counter-num">0:00</span></div>#}
+{#{% endif %}#}
+<div id="counter">{{ s.questions|indexOf:s.currentQuestion|add:1 }}/{{ s.questions|length }}
+    {% if s.currentQuestion.deadline != null and s.status|lower == "open" %}
+        <span id="counter-num">0:00</span>
+    {% endif %}
+</div>
 <div class="container" style="margin-top: max(5%, 50px)">
     <div class="jumbotron">
-        <h2>{{ s.question }}</h2>
+        <h2>{{ s.currentQuestion.question }}</h2>
         {% if s.status|lower == "closed" %}
             <small style="float: left;" class="text-muted h4"><em>Survey is closed</em></small>
         {% elif s.status|lower == "draft" %}
             <small style="float: left" class="text-muted h4"><em>Survey is not yet open</em></small>
         {% endif %}
     </div>
-    {% for o in s.options %}
-        {% if s.id in request.session.answered_surveys or s.status|lower == 'closed' %}
-            <div class="btn btn-primary option" style="display: block;background-color: gray">
-                {{ o }}
-                <div style="float: right">{{ s.results|mapget:o }}</div>
-            </div>
-        {% elif s.status|lower == 'draft' %}
-            <div class="btn btn-primary option" style="display: block;background-color: gray">
-                {{ o }}
-            </div>
-        {% else %}
-            <div onclick="submit_answer('{{ o }}')" class="btn btn-primary option" style="display: block">
-                {{ o }}
-            </div>
-        {% endif %}
+    {% for o in s.currentQuestion.options %}
+        {% autoescape off %}
+        {% buildoption s o request.session %}
+        {% endautoescape %}
     {% endfor %}
+    {% if s.type == "manual" %}
+        <ul class="pager" style="margin-top: 5%">
+            {% if s.questions|indexOf:s.currentQuestion != 0 %}
+                <li onclick="prev()" class="previous"><a href="#">Previous</a></li>
+            {% endif %}
+            {% if s.questions|indexOf:s.currentQuestion != s.questions|length|add:"-1" %}
+                <li onclick="next()" class="next"><a href="#">Next</a></li>
+            {% endif %}
+        </ul>
+    {% endif %}
 </div>
 </body>
 </html>
