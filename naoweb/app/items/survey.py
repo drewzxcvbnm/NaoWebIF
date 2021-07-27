@@ -28,10 +28,11 @@ class SurveyQuestion(Item):
 
 class Survey(Item):
 
-    def __init__(self, questions: List[SurveyQuestion], status: str = "Draft", type: str = "manual"):
+    def __init__(self, questions: List[SurveyQuestion], status: str = "Draft", type: str = "manual",
+                 pin=next(pinGenerator)):
         super().__init__()
         self.status = status
-        self.pin = next(pinGenerator)
+        self.pin = pin
         self.questions = questions
         self.currentQuestion = self.questions[0]
         self.type = type
