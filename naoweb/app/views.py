@@ -10,6 +10,18 @@ from app.items.presentation import Presentation
 from rest_framework.decorators import api_view
 
 
+def sid_is_present(func):
+    def wrapper(*args, **kwargs):
+        sid = kwargs['sid']
+        if sid not in surveys:
+            context = {"msg": f"Survey(id={sid}) is not present"}
+            temp = loader.get_template('error/404.html')
+            return HttpResponse(status=404, content=temp.render(context))
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 async def current_datetime(request):
     now = datetime.datetime.now()
     html = '<html><body>It is now %s.</body></html>' % now
@@ -37,19 +49,22 @@ def presentation_page(request, pid):
     return HttpResponse(template.render(context))
 
 
+@sid_is_present
 def survey_page(request, sid):
     s = surveys[sid]
     context = {"s": s}
     return render(request, 'app/survey.html', context)
 
 
+@sid_is_present
 @api_view(["GET"])
 def open_survey(request, sid):
     s = surveys[sid]
     s.open()
-    return HttpResponse(status=200, content_type='application/json', content=surveyToJSON(s))
+    return HttpResponse(status=200, content_type='application/json', content=survey_to_json(s))
 
 
+@sid_is_present
 @api_view(["GET"])
 def get_survey_status(request, sid):
     s = surveys[sid]
@@ -57,19 +72,20 @@ def get_survey_status(request, sid):
     return HttpResponse(status=200, content_type='application/json', content=json.dumps(ret))
 
 
+@sid_is_present
 @api_view(["GET"])
 def get_survey(request, sid):
     s = surveys[sid]
-    return HttpResponse(status=200, content_type='application/json', content=surveyToJSON(s))
+    return HttpResponse(status=200, content_type='application/json', content=survey_to_json(s))
 
 
 @api_view(["GET"])
 def get_survey_by_pin(request, pin):
     res = list(filter(lambda x: x.pin.lower() == pin.lower(), surveys.values()))
     if len(res) == 0:
-        return HttpResponse(status=200, content_type='application/json', content="false")
+        return HttpResponse(status=400, content_type='application/json', content="false")
     s = res[0]
-    return HttpResponse(status=200, content_type='application/json', content=surveyToJSON(s))
+    return HttpResponse(status=200, content_type='application/json', content=survey_to_json(s))
 
 
 @api_view(["POST"])
@@ -81,7 +97,7 @@ def create_presentation(request):
 @api_view(["POST"])
 def create_survey(request, pid):
     p = presentations[pid]
-    s = Survey.fromJson(**request.data)
+    s = Survey.from_json(**request.data)
     p.add_survey(s)
     return HttpResponse(status=200, content=str(s.id))
 
@@ -99,6 +115,7 @@ def answer_survey_question(request, qid):
     return HttpResponse(status=200, content_type='application/json', content=json.dumps(q.results, default=str))
 
 
+@sid_is_present
 @api_view(["POST"])
 def update_survey(request, sid):
     s = surveys[sid]
@@ -107,17 +124,37 @@ def update_survey(request, sid):
     return HttpResponse(status=200, content="done")
 
 
+@api_view(["DELETE"])
+def delete_presentation(request, pid):
+    pr = presentations[pid]
+    del presentations[pid]
+    for s in pr.surveys:
+        del surveys[s.id]
+    return HttpResponse(status=200, content="done")
+
+
+@api_view(["DELETE"])
+def clear_data(request):
+    for pid in list(presentations.keys()):
+        del presentations[pid]
+    for sid in list(surveys.keys()):
+        del surveys[sid]
+    return HttpResponse(status=200, content="done")
+
+
+@sid_is_present
 def survey_next(request, sid):
     s = surveys[sid]
     s.next()
     return HttpResponse(status=200, content="done")
 
 
+@sid_is_present
 def survey_prev(request, sid):
     s = surveys[sid]
     s.prev()
     return HttpResponse(status=200, content="done")
 
 
-def surveyToJSON(survey):
+def survey_to_json(survey):
     return jsonpickle.encode(survey, unpicklable=False)

@@ -33,5 +33,7 @@ urlpatterns = [
     path('survey/pin/<str:pin>', app.views.get_survey_by_pin),
     path('view/presentation/<int:pid>', app.views.presentation_page),
     path('view/survey/<int:sid>', app.views.survey_page),
-    path('answer/survey/<int:qid>', app.views.answer_survey_question)
+    path('answer/survey/<int:qid>', app.views.answer_survey_question),
+    path('delete/presentation/<int:pid>', app.views.delete_presentation),
+    path('delete/all', app.views.clear_data),
 ]
