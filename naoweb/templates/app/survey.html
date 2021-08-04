@@ -117,7 +117,7 @@
     </div>
     {% for o in s.currentQuestion.options %}
         {% autoescape off %}
-        {% buildoption s o request.session %}
+            {% buildoption s o request.session %}
         {% endautoescape %}
     {% endfor %}
     {% if s.type == "manual" %}

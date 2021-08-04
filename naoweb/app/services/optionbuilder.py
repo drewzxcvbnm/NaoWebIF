@@ -26,23 +26,23 @@ class DefaultOptionBuilder:
 
     def _open(self):
         if self.answered:
-            return self._validOrInvalid()
+            return self._valid_or_invalid()
         return OptionBuilder.buildClickable(self.o)
 
     def _closed(self):
-        return self._validOrInvalid()
+        return self._valid_or_invalid()
 
-    def _validOrInvalid(self):
-        if not self._hasValid():
+    def _valid_or_invalid(self):
+        if not self._has_valid():
             return OptionBuilder.buildUnclickableWithNums(self.o, self.s)
-        if self._isValid():
+        if self._is_valid():
             return OptionBuilder.buildValid(self.o, self.s)
         return OptionBuilder.buildInvalid(self.o, self.s)
 
-    def _hasValid(self):
+    def _has_valid(self):
         return self.s.currentQuestion.validOption is not None
 
-    def _isValid(self):
+    def _is_valid(self):
         cq = self.s.currentQuestion
         vop = cq.options[cq.validOption - 1]
         return vop == self.o
@@ -55,13 +55,13 @@ class ManualOptionBuilder(DefaultOptionBuilder):
 class AutoOptionBuilder(DefaultOptionBuilder):
 
     def _open(self):
-        if self._overDeadline():
-            return self._validOrInvalid()
+        if self._over_deadline():
+            return self._valid_or_invalid()
         if self.answered:
             return OptionBuilder.buildUnclickableWithNums(self.o, self.s)
         return OptionBuilder.buildClickable(self.o)
 
-    def _overDeadline(self):
+    def _over_deadline(self):
         dl = self.s.currentQuestion.deadline
         if dl is None:
             return False

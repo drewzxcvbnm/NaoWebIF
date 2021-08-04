@@ -12,7 +12,7 @@ from app.items.persistence import surveys, pinGenerator, surveyQuestions
 
 class SurveyQuestion(Item):
 
-    def __init__(self, question: str, options: List[str], timelimit: int = None, validoption: int = None):
+    def __init__(self, question: str, options: List[str], timelimit: int = None, validoption: int = None, **kwargs):
         super().__init__()
         self.deadline = None
         self.question = question
