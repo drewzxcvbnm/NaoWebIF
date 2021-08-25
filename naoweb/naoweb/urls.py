@@ -36,4 +36,5 @@ urlpatterns = [
     path('answer/survey/<int:qid>', app.views.answer_survey_question),
     path('delete/presentation/<int:pid>', app.views.delete_presentation),
     path('delete/all', app.views.clear_data),
+    path('favicon.ico', app.views.favicon)
 ]

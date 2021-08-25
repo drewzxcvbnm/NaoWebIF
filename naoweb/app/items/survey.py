@@ -7,7 +7,7 @@ from dateutil import tz
 
 from app.items.item import Item
 
-from app.items.persistence import surveys, pinGenerator, surveyQuestions
+from app.items.persistence import surveys, pinGenerator, surveyQuestions, pins
 
 
 class SurveyQuestion(Item):
@@ -29,13 +29,16 @@ class SurveyQuestion(Item):
 class Survey(Item):
 
     def __init__(self, questions: List[SurveyQuestion], status: str = "Draft", type: str = "manual",
-                 pin=next(pinGenerator), **kwargs):
+                 pin=None, timelimit=None, **kwargs):
         super().__init__()
         self.status = status
-        self.pin = pin
+        self.pin = pin if pin is not None else next(pinGenerator)
         self.questions = questions
         self.currentQuestion = self.questions[0]
         self.type = type
+        self.timelimit = timelimit
+        self.deadline = None
+        pins.add(self.pin)
         surveys[self.id] = self
 
     @staticmethod
@@ -52,6 +55,9 @@ class Survey(Item):
 
     def open(self):
         self.status = "Open"
+        if self.timelimit is not None:
+            self.deadline = datetime.now(tz.gettz("Europe/Riga")) + timedelta(seconds=self.timelimit)
+            Thread(target=self._close_after_deadline).start()
         if self.currentQuestion.timelimit is not None:
             self.currentQuestion.set_deadline()
         if self.type == "auto":
@@ -83,6 +89,10 @@ class Survey(Item):
         self.currentQuestion = self.questions[i]
         if self.currentQuestion.timelimit is not None:
             self.currentQuestion.set_deadline()
+
+    def _close_after_deadline(self):
+        time.sleep(self.timelimit)
+        self.close()
 
     def close(self):
         self.status = 'Closed'

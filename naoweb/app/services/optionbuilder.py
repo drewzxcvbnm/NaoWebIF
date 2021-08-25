@@ -153,5 +153,5 @@ _optionBuilders = {
 
 
 def getOptionBuilder(s: Survey, o: str, session):
-    mydef = lambda x1, x2, x3: DefaultOptionBuilder(x1, x2, x3)
-    return _optionBuilders.get(s.type, mydef)(o, s, session)
+    default = lambda x1, x2, x3: DefaultOptionBuilder(x1, x2, x3)
+    return _optionBuilders.get(s.type, default)(o, s, session)

@@ -1,17 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% load app_extras %}
-    <meta charset="UTF-8">
     <title>Survey {{ s.id }}</title>
+    {% load app_extras %}
     {% load static %}
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{% static 'app/style.css' %}">
-    <script type="text/javascript" src="{% static 'app/app.js' %}"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    {% include "app/header.html" %}
     <style>
         .option {
             display: block;
@@ -38,7 +31,6 @@
     const currentStatus = "{{ s.status }}"
     const sid = {{ s.id }};
     const qid = {{ s.currentQuestion.id }}
-
         setInterval(function () {
             httpGetAsync("/survey/status/" + sid, function (resp) {
                 resp = JSON.parse(resp)
@@ -65,45 +57,52 @@
             location.reload();
         })
     }
-    {% if s.currentQuestion.deadline != null and s.status|lower == "open" %}
-        function millisToMinutesAndSeconds(millis) {
-            let minutes = Math.floor(millis / 60000);
-            let seconds = ((millis % 60000) / 1000).toFixed(0);
-            return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
-        }
 
-        deadline = Date.parse("{{ s.currentQuestion.deadline.isoformat }}")
-        const type = "{{ s.type }}"
-        if (deadline < Date.now() && type === "auto") {
-            setTimeout(location.reload, 5000);
-        } else {
-            window.onload = updateTime
-            setInterval(updateTime, 1000);
-        }
-        var oldLeftOver = deadline - Date.now()
-        function updateTime() {
-            const leftOverTime = deadline - Date.now()
-            if (leftOverTime <= 0 && oldLeftOver > 0) {
-                location.reload();
+    function getDeadlineChecker(deadline) {
+        let oldleftOver = deadline - Date.now()
+        checker = function () {
+            let newleftOver = deadline - Date.now()
+            if (oldleftOver >= 0 && newleftOver < 0) {
+                location.reload()
             }
-            if (leftOverTime <= 0 && type === "auto") {
-                location.reload();
-            } else if (leftOverTime > 0) {
-                var innerText = millisToMinutesAndSeconds(leftOverTime);
-                document.getElementById("counter-num").innerText = innerText
-            } else {
-                document.getElementById("counter-num").innerText = "0:00"
-            }
-            oldLeftOver = leftOverTime
+            oldleftOver = newleftOver
         }
+        return checker
+    }
+
+    {% if s.status|lower == "open" %}
+        {% if s.currentQuestion.deadline != null or s.deadline != null %}
+            {% if s.deadline != null %}
+                counterId = 'survey-counter-num'
+                deadline = Date.parse("{{ s.deadline.isoformat }}")
+            {% else %}
+                counterId = 'counter-num'
+                deadline = Date.parse("{{ s.currentQuestion.deadline.isoformat }}")
+            {% endif %}
+            counterUpdater = () => updateCounterElement(counterId, deadline)
+            initial = calculateTimeTillDeadline(deadline)
+            setInterval(counterUpdater, 1000)
+            {% if s.type == "auto" %}
+                checker = getDeadlineChecker(deadline)
+                setInterval(checker, 1000)
+            {% endif %}
+        {% endif %}
     {% endif %}
 </script>
 {#{% if s.currentQuestion.deadline != null and s.status|lower == "open" %}#}
 {#    <div id="counter">Question will expire in <span id="counter-num">0:00</span></div>#}
 {#{% endif %}#}
-<div id="counter">{{ s.questions|indexOf:s.currentQuestion|add:1 }}/{{ s.questions|length }}
+<div id="counter">
+    {{ s.questions|indexOf:s.currentQuestion|add:1 }}/{{ s.questions|length }} <br/>
     {% if s.currentQuestion.deadline != null and s.status|lower == "open" %}
-        <span id="counter-num">0:00</span>
+        Question expires in:
+        <span id="counter-num" content="document.getElementById('counter-num').innerText=initial">0:00</span>
+        <script>document.getElementById('counter-num').innerText = initial</script>
+    {% endif %}
+    {% if s.deadline != null and s.status|lower == "open" %}
+        Survey timelimit:
+        <span id="survey-counter-num">0:00</span>
+        <script>document.getElementById('survey-counter-num').innerText = initial</script>
     {% endif %}
 </div>
 <div class="container" style="margin-top: max(5%, 50px)">

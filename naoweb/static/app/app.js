@@ -30,3 +30,18 @@ function httpGetAsync(theUrl, callback) {
     xmlHttp.open("GET", theUrl, true); // true for asynchronous
     xmlHttp.send(null);
 }
+
+function millisToMinutesAndSeconds(millis) {
+    let minutes = Math.floor(millis / 60000);
+    let seconds = ((millis % 60000) / 1000).toFixed(0);
+    return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+}
+
+function calculateTimeTillDeadline(deadline) {
+    const leftOverTime = Math.max(deadline - Date.now(), 0)
+    return millisToMinutesAndSeconds(leftOverTime);
+}
+
+function updateCounterElement(counterId, deadline) {
+    document.getElementById(counterId).innerText = calculateTimeTillDeadline(deadline)
+}

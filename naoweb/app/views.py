@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import json
 import datetime
 import jsonpickle
@@ -155,6 +155,9 @@ def survey_prev(request, sid):
     s.prev()
     return HttpResponse(status=200, content="done")
 
+@api_view(["GET"])
+def favicon(request):
+    return redirect('/static/app/favicon.ico')
 
 def survey_to_json(survey):
     return jsonpickle.encode(survey, unpicklable=False)
