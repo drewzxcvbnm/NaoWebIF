@@ -12,14 +12,14 @@ from app.items.persistence import surveys, pinGenerator, surveyQuestions, pins
 
 class SurveyQuestion(Item):
 
-    def __init__(self, question: str, options: List[str], timelimit: int = None, validoption: int = None, **kwargs):
+    def __init__(self, question: str, options: List[str], timelimit: int = None, validoptions: [int] = None, **kwargs):
         super().__init__()
         self.deadline = None
         self.question = question
         self.options = options
         self.timelimit = timelimit
         self.results = dict([(i, 0) for i in options])
-        self.validOption = validoption
+        self.validOptions = validoptions
         surveyQuestions[self.id] = self
 
     def set_deadline(self):

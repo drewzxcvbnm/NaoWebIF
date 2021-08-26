@@ -110,6 +110,7 @@ def answer_survey_question(request, qid):
     if "answered_questions" not in request.session:
         request.session["answered_questions"] = []
     request.session["answered_questions"].append(qid)
+    request.session[qid] = a
     request.session.modified = True
     q = surveyQuestions[qid]
     return HttpResponse(status=200, content_type='application/json', content=json.dumps(q.results, default=str))
@@ -155,9 +156,11 @@ def survey_prev(request, sid):
     s.prev()
     return HttpResponse(status=200, content="done")
 
+
 @api_view(["GET"])
 def favicon(request):
     return redirect('/static/app/favicon.ico')
+
 
 def survey_to_json(survey):
     return jsonpickle.encode(survey, unpicklable=False)
