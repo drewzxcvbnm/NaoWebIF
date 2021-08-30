@@ -8,14 +8,17 @@ from app.items.survey import Survey
 
 class DefaultOptionResolver:
 
-    def __init__(self, o: str, s: Survey, session):
-        self.option_builder = ChoiceAwareOptionBuilderWrapper(s, session, o)
-        self.o = o
-        self.s = s
-        if session.get('answered_questions') is None:
+    def __init__(self, option_info):
+        self.o = option_info['option-str']
+        self.s = option_info['survey']
+        self.session = option_info['session']
+        choice_mapper = ChoiceAwareOptionMapper(option_info)
+        index_mapper = ChoiceIndexMapper(option_info['index'])
+        self.option_builder = OptionBuilderWrapper([choice_mapper, index_mapper])
+        if self.session.get('answered_questions') is None:
             self.answered = False
         else:
-            self.answered = s.currentQuestion.id in session["answered_questions"]
+            self.answered = self.s.currentQuestion.id in self.session["answered_questions"]
 
     def build(self):
         if self.s.status.lower() == "open":
@@ -92,6 +95,7 @@ class OptionBuilder:
         self._clickable = False
         self._survey = None
         self._chosen = False
+        self._index = None
 
     def type(self, t: ButtonType):
         self._button_type = t
@@ -114,18 +118,26 @@ class OptionBuilder:
         self._chosen = True
         return self
 
+    def index(self, index):
+        self._index = index
+        return self
+
     def buildoption(self, op: str):
         style = "" if self._grey is False else "background-color: gray;"
         if self._chosen:
             style += "border-color:rgba(82,168,236,.8);border-width:3px;"
         btn = self._button_type.value
-        nums = "" if self._show_nums is False else f'<div style="float: right">{self._survey.currentQuestion.results[op]}</div>'
-        click = "" if self._clickable is False else f'onclick="submit_answer(\'{op}\')"'
-        res = f'<div {click} class ="btn {btn} option" style="display: block;{style}">{op} {nums}</div>'
+        nums = "" if self._show_nums is False else f'<div style="float: right">{self._survey.currentQuestion.results[self._index]}</div>'
+        click = "" if self._clickable is False else f'onclick="submit_answer({self._index})"'
+        index = "" if self._index is None else f'index={self._index}'
+        res = f'<div {click} {index} class ="btn {btn} option" style="display: block;{style}">{op} {nums}</div>'
         return res
 
 
 class OptionBuilderWrapper:
+
+    def __init__(self, mappers):
+        self.mappers = mappers
 
     def build_clickable(self, option: str):
         b = OptionBuilder().type(ButtonType.NORMAL).clickable(True)
@@ -148,23 +160,35 @@ class OptionBuilderWrapper:
         return self._map_builder(b).buildoption(option)
 
     def _map_builder(self, builder):
+        for mapper in self.mappers:
+            builder = mapper.map_builder(builder)
         return builder
 
 
-class ChoiceAwareOptionBuilderWrapper(OptionBuilderWrapper):
+class ChoiceIndexMapper:
 
-    def __init__(self, survey: Survey, session, option: str):
-        self.survey = survey
-        self.session = session
-        self.option = option
-        super().__init__()
+    def __init__(self, option_index):
+        self.i = option_index
 
-    def _map_builder(self, builder):
-        qid = self.survey.currentQuestion.id
+    def map_builder(self, builder):
+        builder.index(self.i)
+        return builder
+
+
+class ChoiceAwareOptionMapper:
+
+    def __init__(self, option_info):
+        self.session = option_info['session']
+        self.qid = option_info['survey'].currentQuestion.id
+        self.option = option_info['option-str']
+        self.option_index = option_info['index']
+
+    def map_builder(self, builder):
+        qid = self.qid
         if self.session.get('answered_questions') is None or qid not in self.session['answered_questions']:
             return builder
-        choice = self.session[qid]
-        if choice == self.option:
+        choices = self.session[qid]
+        if self.option_index in choices:
             builder.ischosen()
         return builder
 
@@ -175,11 +199,11 @@ class ChoiceAwareOptionBuilderWrapper(OptionBuilderWrapper):
 # < / div >
 
 _optionBuilders = {
-    "auto": lambda o, s, ses: AutoOptionResolver(o, s, ses),
-    "manual": lambda o, s, ses: ManualOptionResolver(o, s, ses),
+    "auto": lambda o: AutoOptionResolver(o),
+    "manual": lambda o: ManualOptionResolver(o),
 }
 
 
-def getOptionBuilder(s: Survey, o: str, session):
-    default = lambda x1, x2, x3: DefaultOptionResolver(x1, x2, x3)
-    return _optionBuilders.get(s.type, default)(o, s, session)
+def get_option_builder(option_info):
+    default = lambda x1, x2, x3: DefaultOptionResolver(option_info)
+    return _optionBuilders.get(option_info['survey'].type, default)(option_info)

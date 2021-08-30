@@ -18,7 +18,7 @@ class SurveyQuestion(Item):
         self.question = question
         self.options = options
         self.timelimit = timelimit
-        self.results = dict([(i, 0) for i in options])
+        self.results = [0 for i in options]
         self.validOptions = validoptions
         surveyQuestions[self.id] = self
 
