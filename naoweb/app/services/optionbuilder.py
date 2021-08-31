@@ -12,8 +12,9 @@ class DefaultOptionResolver:
         self.o = option_info['option-str']
         self.s = option_info['survey']
         self.session = option_info['session']
+        self.option_index = option_info['index']
         choice_mapper = ChoiceAwareOptionMapper(option_info)
-        index_mapper = ChoiceIndexMapper(option_info['index'])
+        index_mapper = ChoiceIndexMapper(self.option_index)
         self.option_builder = OptionBuilderWrapper([choice_mapper, index_mapper])
         if self.session.get('answered_questions') is None:
             self.answered = False
@@ -29,6 +30,10 @@ class DefaultOptionResolver:
         return self.option_builder.build_empty_unclickable(self.o)
 
     def _open(self):
+        if self.s.currentQuestion.answer_type == 'multi-choice' and self._is_unclicked():
+            return self.option_builder.build_clickable(self.o)
+        if self.s.currentQuestion.answer_type == 'multi-choice' and not self._is_unclicked():
+            return self.option_builder.build_empty_unclickable(self.o)
         if self.answered:
             return self._valid_or_invalid()
         return self.option_builder.build_clickable(self.o)
@@ -51,14 +56,22 @@ class DefaultOptionResolver:
         cq = self.s.currentQuestion
         return any([self.o == cq.options[vop - 1] for vop in cq.validOptions])
 
+    def _is_unclicked(self):
+        qid = self.s.currentQuestion.id
+        if self.session.get('answered_questions') is None:
+            return True
+        if qid not in self.session['answered_questions']:
+            return True
+        return self.option_index not in self.session[qid]
+
 
 class ManualOptionResolver(DefaultOptionResolver):
 
-    def __init__(self, o: str, s: Survey, session):
-        super().__init__(o, s, session)
-        self.option_builder = ChoiceAwareOptionBuilderWrapper(s, session, o)
-
     def _open(self):
+        if self.s.currentQuestion.answer_type == 'multi-choice' and self._is_unclicked():
+            return self.option_builder.build_clickable(self.o)
+        if self.s.currentQuestion.answer_type == 'multi-choice' and not self._is_unclicked():
+            return self.option_builder.build_empty_unclickable(self.o)
         if not self.answered:
             return self.option_builder.build_clickable(self.o)
         return self.option_builder.build_unclickable_with_nums(self.o, self.s)
@@ -69,6 +82,10 @@ class AutoOptionResolver(DefaultOptionResolver):
     def _open(self):
         if self._over_deadline():
             return self._valid_or_invalid()
+        if self.s.currentQuestion.answer_type == 'multi-choice' and self._is_unclicked():
+            return self.option_builder.build_clickable(self.o)
+        if self.s.currentQuestion.answer_type == 'multi-choice' and not self._is_unclicked():
+            return self.option_builder.build_empty_unclickable(self.o)
         if self.answered:
             return self.option_builder.build_unclickable_with_nums(self.o, self.s)
         return self.option_builder.build_clickable(self.o)
