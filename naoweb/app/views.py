@@ -170,11 +170,30 @@ def user_score(request, sid):
     session = request.session
     survey = surveys[sid]
     denom = len(survey.questions)
-    numer = sum(map(lambda q: question_validity(q, session), survey.questions))
+    numer = sum(map(lambda q: user_question_score(q, session), survey.questions))
     return HttpResponse(status=200, content=str(round(numer / denom, 2)))
 
 
-def question_validity(question: SurveyQuestion, session):
+@sid_is_present
+@api_view(["GET"])
+def survey_score(request, sid):
+    survey = surveys[sid]
+    denom = len(survey.questions)
+    numer = sum(map(lambda q: survey_question_score(q), survey.questions))
+    return HttpResponse(status=200, content=str(round(numer / denom, 2)))
+
+
+def survey_question_score(question):
+    results = question.results
+    if question.validOptions is None or len(question.validOptions) == 0:
+        return 1
+    if sum(results) == 0:
+        return 0
+    valids = [i - 1 for i in question.validOptions]
+    return sum([results[valid_option_index] for valid_option_index in valids]) / sum(results)
+
+
+def user_question_score(question: SurveyQuestion, session):
     valid_options = question.validOptions
     if valid_options is None or len(valid_options) == 0:
         return 1
