@@ -13,7 +13,7 @@ from app.items.persistence import surveys, pinGenerator, surveyQuestions, pins
 class SurveyQuestion(Item):
 
     def __init__(self, question: str, options: List[str], timelimit: int = None, validoptions: [int] = None,
-                 answertype='single-choice', **kwargs):
+                 answertype=None, **kwargs):
         super().__init__()
         self.deadline = None
         self.question = question
@@ -21,7 +21,10 @@ class SurveyQuestion(Item):
         self.timelimit = timelimit
         self.results = [0 for i in options]
         self.validOptions = validoptions
-        self.answer_type = answertype
+        if answertype is not None:
+            self.answer_type = answertype
+        else:
+            self.answer_type = "multi-choice" if len(self.validOptions) > 1 else "single-choice"
         surveyQuestions[self.id] = self
 
     def set_deadline(self):
@@ -31,7 +34,7 @@ class SurveyQuestion(Item):
 class Survey(Item):
 
     def __init__(self, questions: List[SurveyQuestion], status: str = "Draft", type: str = "manual",
-                 pin=None, timelimit=None, **kwargs):
+                 pin=None, timelimit=None, showscore=False, **kwargs):
         super().__init__()
         self.status = status
         self.pin = pin if pin is not None else next(pinGenerator)
@@ -40,6 +43,7 @@ class Survey(Item):
         self.type = type
         self.timelimit = timelimit
         self.deadline = None
+        self.show_score = showscore
         pins.add(self.pin)
         surveys[self.id] = self
 

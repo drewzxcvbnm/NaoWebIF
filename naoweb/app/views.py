@@ -4,7 +4,7 @@ import datetime
 import jsonpickle
 from django.template import loader, Context
 from django.http import HttpResponse
-from app.items.survey import Survey
+from app.items.survey import Survey, SurveyQuestion
 from app.items.persistence import presentations, surveys, surveyQuestions
 from app.items.presentation import Presentation
 from rest_framework.decorators import api_view
@@ -162,6 +162,28 @@ def survey_prev(request, sid):
 @api_view(["GET"])
 def favicon(request):
     return redirect('/static/app/favicon.ico')
+
+
+@sid_is_present
+@api_view(["GET"])
+def user_score(request, sid):
+    session = request.session
+    survey = surveys[sid]
+    denom = len(survey.questions)
+    numer = sum(map(lambda q: question_validity(q, session), survey.questions))
+    return HttpResponse(status=200, content=str(round(numer / denom, 2)))
+
+
+def question_validity(question: SurveyQuestion, session):
+    valid_options = question.validOptions
+    if valid_options is None or len(valid_options) == 0:
+        return 1
+    if question.id not in session:
+        return 0
+    valid_options = set(map(lambda o: o - 1, valid_options))
+    user_answers = set(session[question.id])
+    numer = len(user_answers.intersection(valid_options)) - len(user_answers.difference(valid_options))
+    return max(numer / len(valid_options), 0)
 
 
 def survey_to_json(survey):

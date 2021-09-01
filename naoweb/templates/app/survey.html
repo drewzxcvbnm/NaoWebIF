@@ -110,6 +110,15 @@
         <h2>{{ s.currentQuestion.question }}</h2>
         {% if s.status|lower == "closed" %}
             <small style="float: left;" class="text-muted h4"><em>Survey is closed</em></small>
+            {% if s.show_score %}
+                <small style="float: right;" class="text-muted h4"><em id="user-score"></em></small>
+                <script>
+                    const url = '/score/user/{{ s.id }}';
+                    httpGetAsync(url, function (resp) {
+                        $('#user-score').text((resp * 100) + '%')
+                    })
+                </script>
+            {% endif %}
         {% elif s.status|lower == "draft" %}
             <small style="float: left" class="text-muted h4"><em>Survey is not yet open</em></small>
         {% endif %}

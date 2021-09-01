@@ -222,5 +222,5 @@ _optionBuilders = {
 
 
 def get_option_builder(option_info):
-    default = lambda x1, x2, x3: DefaultOptionResolver(option_info)
+    default = lambda info: DefaultOptionResolver(info)
     return _optionBuilders.get(option_info['survey'].type, default)(option_info)
