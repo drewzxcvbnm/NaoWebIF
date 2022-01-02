@@ -4,7 +4,7 @@ import datetime
 import jsonpickle
 from django.template import loader, Context
 from django.http import HttpResponse
-from app.items.survey import Survey
+from app.items.survey import Survey, SurveyQuestion
 from app.items.persistence import presentations, surveys, surveyQuestions
 from app.items.presentation import Presentation
 from rest_framework.decorators import api_view
@@ -110,6 +110,9 @@ def answer_survey_question(request, qid):
     if "answered_questions" not in request.session:
         request.session["answered_questions"] = []
     request.session["answered_questions"].append(qid)
+    if qid not in request.session:
+        request.session[qid] = []
+    request.session[qid].append(a)
     request.session.modified = True
     q = surveyQuestions[qid]
     return HttpResponse(status=200, content_type='application/json', content=json.dumps(q.results, default=str))
@@ -155,9 +158,52 @@ def survey_prev(request, sid):
     s.prev()
     return HttpResponse(status=200, content="done")
 
+
 @api_view(["GET"])
 def favicon(request):
     return redirect('/static/app/favicon.ico')
+
+
+@sid_is_present
+@api_view(["GET"])
+def user_score(request, sid):
+    session = request.session
+    survey = surveys[sid]
+    denom = len(survey.questions)
+    numer = sum(map(lambda q: user_question_score(q, session), survey.questions))
+    return HttpResponse(status=200, content=str(round(numer / denom, 2)))
+
+
+@sid_is_present
+@api_view(["GET"])
+def survey_score(request, sid):
+    survey = surveys[sid]
+    denom = len(survey.questions)
+    numer = sum(map(lambda q: survey_question_score(q), survey.questions))
+    return HttpResponse(status=200, content=str(round(numer / denom, 2)))
+
+
+def survey_question_score(question):
+    results = question.results
+    if question.validOptions is None or len(question.validOptions) == 0:
+        return 1
+    if sum(results) == 0:
+        return 0
+    valids = [i - 1 for i in question.validOptions]
+    return sum([results[valid_option_index] for valid_option_index in valids]) / sum(results)
+
+
+def user_question_score(question: SurveyQuestion, session):
+    valid_options = question.validOptions
+    if valid_options is None or len(valid_options) == 0:
+        return 1
+    if question.id not in session:
+        return 0
+    valid_options = set(map(lambda o: o - 1, valid_options))
+    user_answers = set(session[question.id])
+    numer = len(user_answers.intersection(valid_options)) - len(user_answers.difference(valid_options))
+    return max(numer / len(valid_options), 0)
+
 
 def survey_to_json(survey):
     return jsonpickle.encode(survey, unpicklable=False)

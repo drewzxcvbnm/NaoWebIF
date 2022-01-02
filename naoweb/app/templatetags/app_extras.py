@@ -2,7 +2,7 @@ from django import template
 from datetime import datetime, timedelta
 from dateutil import tz
 
-from app.services.optionbuilder import getOptionBuilder
+from app.services.optionbuilder import get_option_builder
 
 register = template.Library()
 
@@ -37,6 +37,7 @@ def answered(answeredQuestionsList, question):
 
 
 @register.simple_tag()
-def buildoption(survey, option, session):
-    b = getOptionBuilder(survey, option, session)
+def buildoption(survey, option, session, i):
+    option_info = {'survey': survey, 'option-str': option, 'session': session, 'index': i - 1}
+    b = get_option_builder(option_info)
     return b.build()
