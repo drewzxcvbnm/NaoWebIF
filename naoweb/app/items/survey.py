@@ -7,19 +7,24 @@ from dateutil import tz
 
 from app.items.item import Item
 
-from app.items.persistence import surveys, pinGenerator, surveyQuestions
+from app.items.persistence import surveys, pinGenerator, surveyQuestions, pins
 
 
 class SurveyQuestion(Item):
 
-    def __init__(self, question: str, options: List[str], timelimit: int = None, validoption: int = None):
+    def __init__(self, question: str, options: List[str], timelimit: int = None, validoptions: [int] = None,
+                 answertype=None, **kwargs):
         super().__init__()
         self.deadline = None
         self.question = question
         self.options = options
         self.timelimit = timelimit
-        self.results = dict([(i, 0) for i in options])
-        self.validOption = validoption
+        self.results = [0 for i in options]
+        self.validOptions = validoptions
+        if answertype is not None:
+            self.answer_type = answertype
+        else:
+            self.answer_type = "multi-choice" if len(self.validOptions) > 1 else "single-choice"
         surveyQuestions[self.id] = self
 
     def set_deadline(self):
@@ -29,13 +34,17 @@ class SurveyQuestion(Item):
 class Survey(Item):
 
     def __init__(self, questions: List[SurveyQuestion], status: str = "Draft", type: str = "manual",
-                 pin=next(pinGenerator), **kwargs):
+                 pin=None, timelimit=None, showscore=False, **kwargs):
         super().__init__()
         self.status = status
-        self.pin = pin
+        self.pin = pin if pin is not None else next(pinGenerator)
         self.questions = questions
         self.currentQuestion = self.questions[0]
         self.type = type
+        self.timelimit = timelimit
+        self.deadline = None
+        self.show_score = showscore
+        pins.add(self.pin)
         surveys[self.id] = self
 
     @staticmethod
@@ -52,6 +61,9 @@ class Survey(Item):
 
     def open(self):
         self.status = "Open"
+        if self.timelimit is not None:
+            self.deadline = datetime.now(tz.gettz("Europe/Riga")) + timedelta(seconds=self.timelimit)
+            Thread(target=self._close_after_deadline).start()
         if self.currentQuestion.timelimit is not None:
             self.currentQuestion.set_deadline()
         if self.type == "auto":
@@ -83,6 +95,10 @@ class Survey(Item):
         self.currentQuestion = self.questions[i]
         if self.currentQuestion.timelimit is not None:
             self.currentQuestion.set_deadline()
+
+    def _close_after_deadline(self):
+        time.sleep(self.timelimit)
+        self.close()
 
     def close(self):
         self.status = 'Closed'
